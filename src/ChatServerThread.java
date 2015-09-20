@@ -8,6 +8,7 @@ public class ChatServerThread extends Thread {
 	private DataInputStream streamIn = null;
 	private DataOutputStream streamOut = null;
 	private volatile boolean stopMe = false;
+	private String nickName;
 
 
 	public ChatServerThread(serverApp _server, Socket _socket) {
@@ -16,6 +17,14 @@ public class ChatServerThread extends Thread {
 		socket = _socket;
 		ID = socket.getPort();
 	}
+	public void setNickName(String nickName){
+		this.nickName = nickName;
+	}
+	
+	public String getNickName(){
+		return nickName;
+	}
+	
 
 	public void send(String msg) {
 		try {

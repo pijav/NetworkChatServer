@@ -61,9 +61,13 @@ public class serverApp implements Runnable {
 			clients[findClient(ID)].send(".bye");
 			System.out.println("BYE answer is sent to: " + ID);
 			remove(ID);
-		} else
+		} 
+		else if(input.startsWith(".nickname")){
+			clients[findClient(ID)].setNickName(input.toString().substring(9, input.length()));
+		}
+		else
 			for (int i = 0; i < clientCount; i++)
-				clients[i].send(ID + ": " + input);
+				clients[i].send(clients[findClient(ID)].getNickName() + ": " + input);
 	}
 
 	public synchronized void remove(int ID) {
