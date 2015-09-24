@@ -9,13 +9,14 @@ public class ChatServerThread extends Thread {
 	private DataOutputStream streamOut = null;
 	private volatile boolean stopMe = false;
 	private String nickName;
-
+	private String IP;
 
 	public ChatServerThread(serverApp _server, Socket _socket) {
 		super();
 		server = _server;
 		socket = _socket;
 		ID = socket.getPort();
+		IP = socket.getInetAddress().toString();
 	}
 	public void setNickName(String nickName){
 		this.nickName = nickName;
@@ -46,7 +47,7 @@ public class ChatServerThread extends Thread {
 	}
 	
 	public void run() {
-		System.out.println("Server Thread " + ID + " running.");
+		System.out.println("Server Thread " + ID + " running. Client address is: " + IP);
 		while (!stopMe) {
 			try {
 				server.handle(ID, streamIn.readUTF());

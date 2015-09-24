@@ -3,7 +3,10 @@ import java.util.Set;
 import java.io.*;
 
 public class serverApp implements Runnable {
-	private ChatServerThread clients[] = new ChatServerThread[50];
+	private ChatServerThread clients[] = new ChatServerThread[50]; // use list
+																	// instead
+																	// use list
+																	// instead
 	private ServerSocket server = null;
 	private Thread thread = null;
 	private int clientCount = 0;
@@ -54,18 +57,28 @@ public class serverApp implements Runnable {
 		return -1;
 	}
 
+	private String getAllNicknames() {
+		StringBuilder nicknames = new StringBuilder();
+		for (int i = 0; i < clientCount; i++) {
+			nicknames.append(clients[i].getNickName() + ":");
+		}
+		return nicknames.toString();
+	}
+
 	public synchronized void handle(int ID, String input) {
 
 		if (".bye".equals(input)) {
 			System.out.println("Got BYE message, sending BYE in answer...");
 			clients[findClient(ID)].send(".bye");
 			System.out.println("BYE answer is sent to: " + ID);
+			// I need to send nicknames data here
+			// ##################################
 			remove(ID);
-		} 
-		else if(input.startsWith(".nickname")){
+		} else if (input.startsWith(".nickname")) {
 			clients[findClient(ID)].setNickName(input.toString().substring(9, input.length()));
-		}
-		else
+			// I need to send nicknames data here
+			// ##################################
+		} else
 			for (int i = 0; i < clientCount; i++)
 				clients[i].send(clients[findClient(ID)].getNickName() + ": " + input);
 	}
@@ -83,8 +96,7 @@ public class serverApp implements Runnable {
 				toTerminate.close();
 			} catch (IOException ioe) {
 				System.out.println("Error closing thread: " + ioe);
-			}
-			finally{
+			} finally {
 				toTerminate.stopMe();
 			}
 		}
@@ -108,5 +120,5 @@ public class serverApp implements Runnable {
 
 	public static void main(String args[]) {
 		serverApp test = new serverApp(3000);
-		}
+	}
 }
