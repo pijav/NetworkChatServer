@@ -1,15 +1,15 @@
 import java.net.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.io.*;
 
 public class serverApp implements Runnable {
-	private ChatServerThread clients[] = new ChatServerThread[50]; // use list
-																	// instead
-																	// use list
-																	// instead
+	private Map<Integer, ChatServerThread> testClients = new HashMap<>();
+	
 	private ServerSocket server = null;
 	private Thread thread = null;
-	private int clientCount = 0;
 	Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
 	Thread[] threadArray = threadSet.toArray(new Thread[threadSet.size()]);
 
@@ -50,74 +50,70 @@ public class serverApp implements Runnable {
 		}
 	}
 
+	
 	private int findClient(int ID) {
-		for (int i = 0; i < clientCount; i++)
-			if (clients[i].getID() == ID)
-				return i;
-		return -1;
+		return ID;
 	}
-
-	private String getAllNicknames() {
+	
+	
+	private String getAllNicknames() { // new method
 		StringBuilder nicknames = new StringBuilder();
-		for (int i = 0; i < clientCount; i++) {
-			nicknames.append(clients[i].getNickName() + ":");
+		for (Entry<Integer, ChatServerThread> entry: testClients.entrySet()) {
+			nicknames.append(entry.getValue().getNickName() + "\n");
 		}
 		return nicknames.toString();
 	}
+	
 
+	
 	public synchronized void handle(int ID, String input) {
 
 		if (".bye".equals(input)) {
 			System.out.println("Got BYE message, sending BYE in answer...");
-			clients[findClient(ID)].send(".bye");
+			// Sending the list of users when someone leaves
+			testClients.get(findClient(ID)).send(".bye");
 			System.out.println("BYE answer is sent to: " + ID);
-			// I need to send nicknames data here
-			// ##################################
+			System.out.println(testClients);
 			remove(ID);
+			for (Entry<Integer, ChatServerThread> entry: testClients.entrySet()) {
+				entry.getValue().send(".userlist" + getAllNicknames());
+			}
 		} else if (input.startsWith(".nickname")) {
-			clients[findClient(ID)].setNickName(input.toString().substring(9, input.length()));
-			// I need to send nicknames data here
-			// ##################################
+			testClients.get(findClient(ID)).setNickName(input.toString().substring(9, input.length()));
+			// Sending the list of users when someone links
+			for (Entry<Integer, ChatServerThread> entry: testClients.entrySet()) {
+				entry.getValue().send(".userlist" + getAllNicknames());
+			}
 		} else
-			for (int i = 0; i < clientCount; i++)
-				clients[i].send(clients[findClient(ID)].getNickName() + ": " + input);
+			for (Entry<Integer, ChatServerThread> entry: testClients.entrySet()) {
+				entry.getValue().send(testClients.get(findClient(ID)).getNickName() + ": " + input);
+			}
 	}
 
+	
 	public synchronized void remove(int ID) {
-		int pos = findClient(ID);
-		if (pos >= 0) {
-			ChatServerThread toTerminate = clients[pos];
-			System.out.println("Removing client thread " + ID + " at " + pos);
-			if (pos < clientCount - 1)
-				for (int i = pos + 1; i < clientCount; i++)
-					clients[i - 1] = clients[i];
-			clientCount--;
-			try {
-				toTerminate.close();
+			try{
+				testClients.get(findClient(ID)).close();
+				testClients.remove(findClient(ID));
 			} catch (IOException ioe) {
 				System.out.println("Error closing thread: " + ioe);
-			} finally {
-				toTerminate.stopMe();
 			}
+	}
+	
+
+	
+	private void addThread(Socket socket) {
+		System.out.println("Client accepted: " + socket);
+		System.out.println(threadArray.length);
+		testClients.put(socket.getPort(), new ChatServerThread(this, socket));
+		try {
+			testClients.get(socket.getPort()).open();
+			testClients.get(socket.getPort()).start();
+		} catch (IOException ioe) {
+			System.out.println("Error opening thread: " + ioe);
 		}
 	}
-
-	private void addThread(Socket socket) {
-		if (clientCount < clients.length) {
-			System.out.println("Client accepted: " + socket);
-			System.out.println(threadArray.length);
-			clients[clientCount] = new ChatServerThread(this, socket);
-			try {
-				clients[clientCount].open();
-				clients[clientCount].start();
-				clientCount++;
-			} catch (IOException ioe) {
-				System.out.println("Error opening thread: " + ioe);
-			}
-		} else
-			System.out.println("Client refused: maximum " + clients.length + " reached.");
-	}
-
+	
 	public static void main(String args[]) {
 		serverApp test = new serverApp(3000);
 	}

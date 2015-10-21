@@ -34,7 +34,7 @@ public class ChatServerThread extends Thread {
 		} catch (IOException ioe) {
 			System.out.println(ID + " ERROR sending: " + ioe.getMessage());
 			server.remove(ID);
-			interrupt();
+			stopMe();
 		}
 	}
 
@@ -66,15 +66,18 @@ public class ChatServerThread extends Thread {
 	
 
 	public void close() throws IOException {
-		if (socket != null)
+		if (socket != null){
 			socket.close();
 			System.out.println("Socket closed");
-		if (streamIn != null)
+		}
+		if (streamIn != null){
 			streamIn.close();
 			System.out.println("Input stream closed");
-		if (streamOut != null)
+		}
+		if (streamOut != null){
 			streamOut.close();
 			System.out.println("Output stream closed");
+		}
 		stopMe();		
 	}
 }
